@@ -10,6 +10,7 @@
 [![Runtime](https://img.shields.io/badge/runtime-standard_library-475569?style=flat-square)](../../README.md#requirements)
 [![Documentation](https://img.shields.io/badge/docs-7_languages-0F766E?style=flat-square)](../../README.md#documentation)
 [![License](https://img.shields.io/badge/license-MIT-16A34A?style=flat-square)](../../LICENSE)
+[![岚叔 X](https://img.shields.io/badge/%E5%B2%9A%E5%8F%94-X-000000?style=flat-square&logo=x&logoColor=white)](https://x.com/LufzzLiz)
 
 </div>
 

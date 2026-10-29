@@ -8,6 +8,7 @@
 [![Runtime](https://img.shields.io/badge/runtime-standard_library-475569?style=flat-square)](#requirements)
 [![Documentation](https://img.shields.io/badge/docs-7_languages-0F766E?style=flat-square)](#documentation)
 [![License](https://img.shields.io/badge/license-MIT-16A34A?style=flat-square)](LICENSE)
+[![岚叔 X](https://img.shields.io/badge/%E5%B2%9A%E5%8F%94-X-000000?style=flat-square&logo=x&logoColor=white)](https://x.com/LufzzLiz)
 
 [English](README.md) · [简体中文](docs/i18n/README.zh-CN.md) · [日本語](docs/i18n/README.ja.md) · [한국어](docs/i18n/README.ko.md) · [Français](docs/i18n/README.fr.md) · [العربية](docs/i18n/README.ar.md) · [Türkçe](docs/i18n/README.tr.md)
 
