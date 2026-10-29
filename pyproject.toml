@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lanshu-openai-media-api"
-version = "0.1.0"
-description = "OpenAI image generation, audio transcription, and usage records for agents."
+version = "0.2.0"
+description = "OpenAI text/image generation, audio transcription, and usage records for agents."
 readme = "README.md"
 requires-python = ">=3.9"
 license = {file = "LICENSE"}
 authors = [{name = "Lanshu"}]
 dependencies = []
-keywords = ["openai", "images", "speech-to-text", "asr", "agent-skills"]
+keywords = ["openai", "text-generation", "responses-api", "images", "speech-to-text", "asr", "agent-skills"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "License :: OSI Approved :: MIT License",

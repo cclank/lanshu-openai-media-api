@@ -1,6 +1,6 @@
 # Lanshu OpenAI Media API
 
-**面向 Agent 的 OpenAI 生图与语音转写工具，保留可追溯的用量记录。**
+**面向 Agent 的 OpenAI 文本、生图与语音转写工具，保留可追溯的用量记录。**
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Runtime](https://img.shields.io/badge/runtime-standard_library-475569?style=flat-square)](../../README.md#requirements)
@@ -10,10 +10,11 @@
 
 [English](../../README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [العربية](README.ar.md) · [Türkçe](README.tr.md)
 
-一个轻量 Python CLI 和可独立分发的 skill，用于调用 OpenAI 生图、文件转写和费用查询 API。每次成功调用都会把输出文件、请求 ID 和用量保存在一起。英文 README 为主文档。
+一个轻量 Python CLI 和可独立分发的 skill，用于调用 OpenAI 文本生成、生图、文件转写和费用查询 API。每次成功调用都会把输出文件、请求 ID 和用量保存在一起。英文 README 为主文档。
 
 ## 功能
 
+- 通过 Responses API 生成文本，精选四个模型，支持推理强度与输出 token 上限。
 - 使用 Sunburst 或 Flare 生成图片，可控制尺寸、质量、数量和格式。
 - 使用 GPT-Transcribe 转写音视频文件，支持多语言提示和术语关键词。
 - 通过 Admin key 按项目、API key 和模型读取费用记录。
@@ -23,6 +24,10 @@
 
 | 任务 | 模型 | 选择 |
 | --- | --- | --- |
+| 日常文本与编程 | `gpt-6.1-sol` | 默认文本，能力与成本均衡 |
+| 复杂推理与专业任务 | `gpt-6-astra` | 优先智能水平 |
+| 写作与修改 | `gpt-6.1-terra` | 快速高效 |
+| 聚焦任务与批量处理 | `gpt-6-luna` | 优先速度与成本 |
 | 优先图片质量 | `gpt-image-2.5-sunburst` | 默认生图 |
 | 优先生成速度 | `gpt-image-2.5-flare` | 快速草稿 |
 | 音视频文件转文字 | `gpt-transcribe` | 默认 ASR |
@@ -36,6 +41,22 @@ Python 3.9 或更高版本，运行时仅使用标准库。curl、ffprobe 和 zs
 ## 快速开始
 
 以下命令在项目目录执行。发起付费调用前，先在现有本地环境中配置普通 API key。
+
+### 生成文本
+
+```bash
+python3 scripts/openai_media.py text \
+  --model gpt-6.1-sol \
+  --prompt "用三句话说明 API 自动化的价值。" \
+  --reasoning-effort low \
+  --out output/answer.txt
+```
+
+默认使用 `gpt-6.1-sol`、`medium` 推理和 4096 输出 token 上限。复杂任务可选 `gpt-6-astra`，高效写作选 `gpt-6.1-terra`，快速批量任务选 `gpt-6-luna`。用 `python3 scripts/openai_media.py models --task text` 只查看文本模型。[官方模型说明](https://developers.openai.com/api/docs/guides/latest-model).
+
+支持 `--prompt-file` 读取 UTF-8 提示词、`--instructions` 设置高层指令，以及 `--max-output-tokens` 控制输出上限；上限包含推理 token。Astra 和 Sol 的推理强度须为 `low` 或更高，Terra 和 Luna 也支持 `none`。请求设置 `store: false`。`--dry-run` 只预览，不读取密钥、调用接口或创建文件。
+
+文本保存为 `.txt`，旁边的 `.metadata.json` 保留响应 ID、实际返回模型、状态、request ID 和 usage。未完成、拒绝或空文本响应仍保存产物与用量，并返回 `ok: false`、退出码 1。检查 `response_status`、`incomplete_details` 和 `refusals` 后再决定是否发起新调用；POST 不自动重试。
 
 ### 生成图片
 
@@ -87,7 +108,7 @@ lanshu-openai-media-api models
 
 | 变量 | 用途 |
 | --- | --- |
-| `OPENAI_API_KEY` | 生图和转写 |
+| `OPENAI_API_KEY` | 文本生成、生图和转写 |
 | `OPENAI_ADMIN_KEY` | 费用查询和 key 名称解析 |
 | `OPENAI_ADMIN_API_KEY` | Admin key 的兼容别名 |
 

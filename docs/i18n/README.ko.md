@@ -1,6 +1,6 @@
 # Lanshu OpenAI Media API
 
-**에이전트를 위한 OpenAI 이미지 생성 및 음성 전사 도구. 사용량을 함께 기록합니다.**
+**에이전트를 위한 OpenAI 텍스트·이미지 생성 및 음성 전사 도구. 사용량을 함께 기록합니다.**
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Runtime](https://img.shields.io/badge/runtime-standard_library-475569?style=flat-square)](../../README.md#requirements)
@@ -10,10 +10,11 @@
 
 [English](../../README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [العربية](README.ar.md) · [Türkçe](README.tr.md)
 
-OpenAI 이미지 생성, 파일 전사, 비용 조회 API를 호출하는 작은 Python CLI와 독립 배포용 스킬입니다. 성공한 호출의 출력 파일, 요청 ID, 사용량을 함께 저장합니다. 영어 README가 기본 문서입니다.
+OpenAI 텍스트·이미지 생성, 파일 전사, 비용 조회 API를 호출하는 작은 Python CLI와 독립 배포용 스킬입니다. 성공한 호출의 출력 파일, 요청 ID, 사용량을 함께 저장합니다. 영어 README가 기본 문서입니다.
 
 ## 기능
 
+- Responses API로 텍스트를 생성하며 선별한 네 모델, 추론 강도, 출력 토큰 상한을 지원합니다.
 - Sunburst와 Flare로 이미지를 생성하고 크기, 품질, 수량, 형식을 지정합니다.
 - GPT-Transcribe로 오디오·비디오 파일을 전사하며 여러 언어 힌트와 전문 용어를 전달합니다.
 - 관리자 키로 프로젝트, API 키, 모델별 비용 기록을 조회합니다.
@@ -23,6 +24,10 @@ OpenAI 이미지 생성, 파일 전사, 비용 조회 API를 호출하는 작은
 
 | 작업 | 모델 | 선택 |
 | --- | --- | --- |
+| 일상 텍스트 작업과 코딩 | `gpt-6.1-sol` | 기본 텍스트 모델, 성능과 비용의 균형 |
+| 복잡한 추론과 전문 작업 | `gpt-6-astra` | 최고 수준의 지능 |
+| 글쓰기와 수정 | `gpt-6.1-terra` | 빠르고 효율적 |
+| 집중된 작업의 대량 처리 | `gpt-6-luna` | 속도와 비용 우선 |
 | 이미지 품질 우선 | `gpt-image-2.5-sunburst` | 이미지 기본값 |
 | 이미지 생성 속도 우선 | `gpt-image-2.5-flare` | 빠른 초안 |
 | 오디오·비디오 파일 전사 | `gpt-transcribe` | ASR 기본값 |
@@ -36,6 +41,22 @@ Python 3.9 이상이 필요하며 런타임 Python 패키지는 표준 라이브
 ## 빠른 시작
 
 프로젝트 디렉터리에서 실행합니다. 유료 API 호출 전에는 기존 로컬 환경에 일반 API 키를 설정하세요.
+
+### 텍스트 생성
+
+```bash
+python3 scripts/openai_media.py text \
+  --model gpt-6.1-sol \
+  --prompt "API 자동화의 장점을 짧은 세 문장으로 설명해 주세요." \
+  --reasoning-effort low \
+  --out output/answer.txt
+```
+
+기본값은 `gpt-6.1-sol`, `medium` 추론, 최대 출력4096토큰입니다. 복잡한 작업에는 `gpt-6-astra`, 효율적인 글쓰기에는 `gpt-6.1-terra`, 빠른 반복 작업에는 `gpt-6-luna`를 선택합니다. `python3 scripts/openai_media.py models --task text`로 텍스트 모델만 표시합니다. [공식 모델 가이드](https://developers.openai.com/api/docs/guides/latest-model).
+
+`--prompt-file`은 UTF-8 입력, `--instructions`는 상위 지침, `--max-output-tokens`는 추론 토큰까지 포함한 출력 상한입니다. Astra와 Sol은 `low` 이상을 지원하고 Terra와 Luna는 `none`도 지원합니다. 요청은 `store: false`를 사용합니다. `--dry-run`은 키를 읽거나 API를 호출하거나 파일을 만들지 않습니다.
+
+텍스트는 `.txt`로, 응답 ID·반환 모델·상태·request ID·usage는 옆의 `.metadata.json`으로 저장합니다. 미완료·거절·빈 응답도 결과와 사용량을 저장하고 `ok: false`, 종료 코드1을 반환합니다. 새 호출 전에 `response_status`, `incomplete_details`, `refusals`를 확인하세요. POST는 자동 재시도하지 않습니다.
 
 ### 이미지 생성
 
@@ -87,7 +108,7 @@ lanshu-openai-media-api models
 
 | 변수 | 용도 |
 | --- | --- |
-| `OPENAI_API_KEY` | 이미지 생성 및 전사 |
+| `OPENAI_API_KEY` | 텍스트·이미지 생성 및 전사 |
 | `OPENAI_ADMIN_KEY` | 비용 조회 및 키 이름 확인 |
 | `OPENAI_ADMIN_API_KEY` | 관리자 키의 호환 별칭 |
 

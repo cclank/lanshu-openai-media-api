@@ -1,6 +1,6 @@
 # Lanshu OpenAI Media API
 
-**Image generation and speech transcription for agents, with structured usage records.**
+**Text and image generation and speech transcription for agents, with structured usage records.**
 
 [![Checks](https://github.com/cclank/lanshu-openai-media-api/actions/workflows/checks.yml/badge.svg)](https://github.com/cclank/lanshu-openai-media-api/actions/workflows/checks.yml)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
@@ -12,7 +12,7 @@
 
 [English](README.md) · [简体中文](docs/i18n/README.zh-CN.md) · [日本語](docs/i18n/README.ja.md) · [한국어](docs/i18n/README.ko.md) · [Français](docs/i18n/README.fr.md) · [العربية](docs/i18n/README.ar.md) · [Türkçe](docs/i18n/README.tr.md)
 
-A small Python CLI and portable agent skill for calling OpenAI's image, transcription, and cost APIs. Generate an image or transcribe a recording, then keep the request ID, returned usage, and output paths together in a metadata file.
+A small Python CLI and portable agent skill for calling OpenAI's text, image, transcription, and cost APIs. Generate text or an image, or transcribe a recording, then keep the request ID, returned usage, and output paths together in a metadata file.
 
 ## Contents
 
@@ -28,6 +28,7 @@ A small Python CLI and portable agent skill for calling OpenAI's image, transcri
 
 ## Capabilities
 
+- **Generate text** through the Responses API with four curated models, reasoning controls, and token limits.
 - **Generate images** with GPT Image 2.5 Sunburst or Flare, with size, quality, quantity, and format controls.
 - **Transcribe files** with GPT-Transcribe, including multiple language hints and domain keywords.
 - **Inspect cost records** using an organization admin credential, scoped to a project and optionally an API key and model.
@@ -38,6 +39,8 @@ A small Python CLI and portable agent skill for calling OpenAI's image, transcri
 ```mermaid
 flowchart LR
     A[Agent or script] --> B[Python CLI]
+    B --> T[Responses API]
+    T --> F[Files and metadata]
     B --> C[Image API]
     B --> D[Transcriptions API]
     B --> E[Costs API]
@@ -50,6 +53,10 @@ flowchart LR
 
 | Task | Model | Selection |
 | --- | --- | --- |
+| Everyday text and coding | `gpt-6.1-sol` | Text default; balanced |
+| Demanding reasoning and professional work | `gpt-6-astra` | Highest intelligence |
+| Writing and revision | `gpt-6.1-terra` | Fast and efficient |
+| Focused, high-volume tasks | `gpt-6-luna` | Fastest and most cost-effective |
 | Image generation with a focus on quality | `gpt-image-2.5-sunburst` | Image default |
 | Fast everyday image generation | `gpt-image-2.5-flare` | Fast drafts |
 | Audio/video file transcription | `gpt-transcribe` | Transcription default |
@@ -69,13 +76,29 @@ python3 scripts/openai_media.py models
 | curl | Optional; preferred HTTP transport when installed |
 | ffprobe | Optional; reads duration for audio formats beyond WAV |
 | zsh | Optional; loads existing exports from `~/.zshrc` |
-| Credentials | `OPENAI_API_KEY` for media; an admin credential for cost queries |
+| Credentials | `OPENAI_API_KEY` for generation and transcription; an admin credential for cost queries |
 
-This project handles image generation and file transcription. Live microphone streaming, speaker diarization, and word-level timestamps are outside the current CLI.
+This project handles single-turn text generation, image generation, and file transcription. Live microphone streaming, speaker diarization, and word-level timestamps are outside the current CLI.
 
 ## Quick start
 
 Run commands from the repository directory. Configure an exported API key in your existing local environment before making a live media request; see [Credentials](#credentials).
+
+### Generate text
+
+```bash
+python3 scripts/openai_media.py text \
+  --model gpt-6.1-sol \
+  --prompt "Explain the benefits of API automation in three short sentences." \
+  --reasoning-effort low \
+  --out output/answer.txt
+```
+
+Defaults: `gpt-6.1-sol`, `medium` reasoning, and 4096 maximum output tokens. Use `--model gpt-6-astra` for demanding work, `gpt-6.1-terra` for efficient writing, or `gpt-6-luna` for fast focused tasks. List only text choices with `python3 scripts/openai_media.py models --task text`. [Official model guide](https://developers.openai.com/api/docs/guides/latest-model).
+
+Use `--prompt-file` for UTF-8 input, `--instructions` for high-level guidance, and `--max-output-tokens` to change the output limit. That limit includes reasoning tokens. Astra and Sol support `low` or higher reasoning; Terra and Luna also support `none`. Requests use `store: false`. `--dry-run` previews the request without credentials, network calls, or files.
+
+The command saves a `.txt` artifact and adjacent `.metadata.json` with response ID, returned model, status, request ID, and usage. Incomplete, refused, or empty responses preserve artifacts and usage, return `ok: false`, and exit with code 1. Inspect `response_status`, `incomplete_details`, and `refusals` before deciding on a new call; POST requests are not automatically retried.
 
 ### Generate an image
 
@@ -148,7 +171,7 @@ lanshu-openai-media-api models
 
 | Variable | Used for |
 | --- | --- |
-| `OPENAI_API_KEY` | Image generation and transcription |
+| `OPENAI_API_KEY` | Text generation, image generation, and transcription |
 | `OPENAI_ADMIN_KEY` | Cost queries and key-name resolution |
 | `OPENAI_ADMIN_API_KEY` | Supported alias for the admin credential |
 
@@ -187,7 +210,7 @@ The package includes five explicit source files and a checksum manifest alongsid
 
 ## Outputs and billing
 
-Successful media calls write the requested artifact and a sidecar:
+Text, image, and transcription calls write the requested artifact and a sidecar:
 
 ```text
 output/
@@ -239,7 +262,7 @@ python3 -B tools/build_skill.py --output-dir dist
 
 The [CI workflow](.github/workflows/checks.yml) runs the protocol tests, documentation checks, skill packaging, and installed-entry-point check on Python 3.9, 3.11, and 3.13.
 
-The original CLI also completed live Sunburst image generation and a 30-second Chinese transcription check with usage and request IDs retained. Live calls are separate from the offline suite and incur provider charges.
+The CLI completed live Sunburst image generation, a 30-second Chinese transcription check, and a minimal GPT-6.1 Sol text request with usage and request IDs retained. Live calls are separate from the offline suite and incur provider charges.
 
 ```text
 .

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""OpenAI image generation, audio transcription and daily cost queries. Python 3.9+."""
+"""OpenAI text/image generation, audio transcription and daily cost queries. Python 3.9+."""
 from __future__ import annotations
 
 import argparse
@@ -28,6 +28,10 @@ from zoneinfo import ZoneInfo
 
 API_BASE = "https://api.openai.com/v1"
 MODELS = [
+    {"task": "text", "id": "gpt-6.1-sol", "default": True, "purpose": "Balanced everyday text and coding"},
+    {"task": "text", "id": "gpt-6-astra", "default": False, "purpose": "Highest intelligence for demanding work"},
+    {"task": "text", "id": "gpt-6.1-terra", "default": False, "purpose": "Efficient writing and revision"},
+    {"task": "text", "id": "gpt-6-luna", "default": False, "purpose": "Fast, cost-effective high-volume tasks"},
     {"task": "image", "id": "gpt-image-2.5-sunburst", "default": True, "purpose": "Highest image quality"},
     {"task": "image", "id": "gpt-image-2.5-flare", "default": False, "purpose": "Fast everyday image generation"},
     {"task": "transcribe", "id": "gpt-transcribe", "default": True, "purpose": "Accurate audio-file transcription"},
@@ -253,6 +257,60 @@ def make_record(task, model, request, response, http, source, outputs):
             "usage": response.get("usage"), "outputs": [str(path) for path in outputs], **http}
 
 
+def generate_text(args):
+    prompt = Path(args.prompt_file).expanduser().read_text(encoding="utf-8") if args.prompt_file else args.prompt
+    if not prompt or not prompt.strip():
+        raise MediaError("Text prompt is empty.")
+    if not args.model.strip():
+        raise MediaError("Model is empty.")
+    if args.max_output_tokens <= 0:
+        raise MediaError("Maximum output tokens must be positive.")
+    if args.reasoning_effort == "none" and any(
+            args.model == name or args.model.startswith(name + "-")
+            for name in ("gpt-6-astra", "gpt-6.1-sol")):
+        raise MediaError("This model does not support reasoning effort none; choose low or higher.", model=args.model)
+    output = Path(args.out).expanduser().absolute()
+    if output.suffix.lower() != ".txt":
+        raise MediaError("Use a .txt output; full API JSON is saved alongside it.")
+    sidecar = metadata(output)
+    ensure_new([output, sidecar])
+    payload = {"model": args.model, "input": prompt.strip(), "store": False,
+               "max_output_tokens": args.max_output_tokens,
+               "reasoning": {"effort": args.reasoning_effort}}
+    if args.instructions:
+        payload["instructions"] = args.instructions
+    if args.dry_run:
+        return {"ok": True, "dry_run": True, "endpoint": "/responses", "request": payload,
+                "outputs": [str(output)], "metadata_path": str(sidecar)}
+    key, source = credential(args)
+    response, http = Client(key, args.timeout, args.transport).request("POST", "responses", payload=payload)
+    parts, refusals = [], []
+    for item in response.get("output") or []:
+        if not isinstance(item, dict) or item.get("type") != "message" or item.get("role") != "assistant":
+            continue
+        for content in item.get("content") or []:
+            if not isinstance(content, dict):
+                continue
+            if content.get("type") == "output_text" and isinstance(content.get("text"), str):
+                parts.append(content["text"])
+            elif content.get("type") == "refusal" and isinstance(content.get("refusal"), str):
+                refusals.append(content["refusal"])
+    text = redact("".join(parts))
+    record = make_record("text", args.model, payload, response, http, source, [output])
+    record.update(response_id=response.get("id"), returned_model=response.get("model"),
+                  response_status=response.get("status"), empty_text=not text.strip(), refusals=refusals)
+    record["ok"] = record["response_status"] == "completed" and not record["empty_text"] and not refusals
+    if not record["ok"]:
+        record["error"] = ("The model returned a refusal." if refusals else
+                           "The text response did not complete." if record["response_status"] != "completed" else
+                           "API returned no visible text.")
+    write_new(output, (text.rstrip() + "\n").encode())
+    save_json(sidecar, record)
+    return {name: value for name, value in record.items() if name not in ("request", "response")} | {
+        "metadata_path": str(sidecar), "text": text,
+        "incomplete_details": response.get("incomplete_details")}
+
+
 def image(args):
     prompt = Path(args.prompt_file).expanduser().read_text() if args.prompt_file else args.prompt
     if not prompt or not prompt.strip():
@@ -466,12 +524,24 @@ def costs(args):
 def parser():
     root = argparse.ArgumentParser(description=__doc__)
     commands = root.add_subparsers(dest="command", required=True)
-    commands.add_parser("models", help="Show the curated models; no API request.")
+    catalog = commands.add_parser("models", help="Show the curated models; no API request.")
+    catalog.add_argument("--task", choices=("text", "image", "transcribe"))
     def common(command):
         command.add_argument("--env-file", help="Existing credential file; overrides environment.")
         command.add_argument("--no-shell-env", action="store_true")
         command.add_argument("--timeout", type=int, default=300)
         command.add_argument("--transport", choices=("auto", "curl", "urllib"), default="auto")
+    text = commands.add_parser("text", help="Generate text through the Responses API.")
+    common(text)
+    prompts = text.add_mutually_exclusive_group(required=True)
+    prompts.add_argument("--prompt")
+    prompts.add_argument("--prompt-file")
+    text.add_argument("--instructions", help="Optional high-level writing or behavior instructions.")
+    text.add_argument("--model", default="gpt-6.1-sol")
+    text.add_argument("--reasoning-effort", choices=("none", "low", "medium", "high", "xhigh", "max"), default="medium")
+    text.add_argument("--max-output-tokens", type=int, default=4096)
+    text.add_argument("--out", required=True)
+    text.add_argument("--dry-run", action="store_true")
     gen = commands.add_parser("image", help="Generate images through the Image API.")
     common(gen)
     prompts = gen.add_mutually_exclusive_group(required=True)
@@ -509,13 +579,13 @@ def main(argv=None):
     args = parser().parse_args(argv)
     try:
         if args.command == "models":
-            result = {"ok": True, "catalog_verified_on": "2026-10-29", "models": MODELS}
+            result = {"ok": True, "catalog_verified_on": "2026-10-29", "models": [model for model in MODELS if not args.task or model["task"] == args.task]}
         else:
             if args.timeout <= 0:
                 raise MediaError("Timeout must be positive.")
-            result = {"image": image, "transcribe": transcribe, "costs": costs}[args.command](args)
+            result = {"text": generate_text, "image": image, "transcribe": transcribe, "costs": costs}[args.command](args)
         print(json.dumps(redact(result), ensure_ascii=False))
-        return 0
+        return 0 if result.get("ok") else 1
     except MediaError as error:
         print(json.dumps(redact({"ok": False, "error": str(error), **error.details}), ensure_ascii=False))
         return 1

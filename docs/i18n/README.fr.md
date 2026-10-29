@@ -1,6 +1,6 @@
 # Lanshu OpenAI Media API
 
-**Génération d’images et transcription vocale pour les agents, avec suivi de l’utilisation.**
+**Génération de texte et d’images et transcription vocale pour les agents, avec suivi de l’utilisation.**
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Runtime](https://img.shields.io/badge/runtime-standard_library-475569?style=flat-square)](../../README.md#requirements)
@@ -10,10 +10,11 @@
 
 [English](../../README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [العربية](README.ar.md) · [Türkçe](README.tr.md)
 
-Une petite interface Python et un skill distribuable pour les API OpenAI de génération d’images, de transcription de fichiers et de consultation des coûts. Chaque appel réussi conserve les fichiers produits, l’identifiant de requête et l’utilisation. Le README anglais constitue la documentation principale.
+Une petite interface Python et un skill distribuable pour les API OpenAI de génération de texte et d’images, de transcription de fichiers et de consultation des coûts. Chaque appel réussi conserve les fichiers produits, l’identifiant de requête et l’utilisation. Le README anglais constitue la documentation principale.
 
 ## Fonctionnalités
 
+- Générer du texte avec Responses API, quatre modèles sélectionnés, un niveau de raisonnement et un plafond de tokens.
 - Générer des images avec Sunburst ou Flare en choisissant taille, qualité, quantité et format.
 - Transcrire des fichiers audio ou vidéo avec GPT-Transcribe, des indications de langue et des mots-clés métier.
 - Consulter les coûts par projet, clé API et modèle avec une clé d’administration.
@@ -23,6 +24,10 @@ Une petite interface Python et un skill distribuable pour les API OpenAI de gén
 
 | Usage | Modèle | Choix |
 | --- | --- | --- |
+| Texte et code au quotidien | `gpt-6.1-sol` | Texte par défaut, équilibre coût et capacités |
+| Raisonnement complexe et travail spécialisé | `gpt-6-astra` | Intelligence maximale |
+| Rédaction et révision | `gpt-6.1-terra` | Rapide et efficace |
+| Tâches ciblées à grand volume | `gpt-6-luna` | Vitesse et coût optimisés |
 | Priorité à la qualité d’image | `gpt-image-2.5-sunburst` | Image par défaut |
 | Priorité à la rapidité | `gpt-image-2.5-flare` | Brouillons rapides |
 | Transcription de fichiers audio et vidéo | `gpt-transcribe` | ASR par défaut |
@@ -36,6 +41,22 @@ Python 3.9 ou ultérieur ; seules les bibliothèques standard sont requises à l
 ## Démarrage rapide
 
 Exécutez les commandes depuis le répertoire du projet. Configurez votre clé API ordinaire dans l’environnement local existant avant un appel facturé.
+
+### Générer du texte
+
+```bash
+python3 scripts/openai_media.py text \
+  --model gpt-6.1-sol \
+  --prompt "Présente les avantages de l’automatisation par API en trois phrases courtes." \
+  --reasoning-effort low \
+  --out output/answer.txt
+```
+
+Par défaut : `gpt-6.1-sol`, raisonnement `medium` et plafond de 4096 tokens de sortie. Choisissez `gpt-6-astra` pour les tâches exigeantes, `gpt-6.1-terra` pour la rédaction efficace ou `gpt-6-luna` pour les tâches ciblées rapides. `python3 scripts/openai_media.py models --task text` limite le catalogue au texte. [Guide officiel des modèles](https://developers.openai.com/api/docs/guides/latest-model).
+
+`--prompt-file` lit une entrée UTF-8 ; `--instructions` définit les consignes générales ; `--max-output-tokens` limite aussi les tokens de raisonnement. Astra et Sol demandent `low` ou plus ; Terra et Luna acceptent aussi `none`. Les requêtes utilisent `store: false`. `--dry-run` ne lit aucune clé, n’appelle pas l’API et ne crée pas de fichier.
+
+Le fichier `.txt` et son `.metadata.json` conservent le texte, l’ID de réponse, le modèle retourné, le statut, le request ID et l’utilisation. Une réponse incomplète, refusée ou vide conserve ses fichiers et son utilisation, renvoie `ok: false` et sort avec le code 1. Examinez `response_status`, `incomplete_details` et `refusals` avant un nouvel appel ; aucun POST n’est réessayé automatiquement.
 
 ### Générer une image
 
@@ -87,7 +108,7 @@ lanshu-openai-media-api models
 
 | Variable | Utilisation |
 | --- | --- |
-| `OPENAI_API_KEY` | Génération d’images et transcription |
+| `OPENAI_API_KEY` | Génération de texte et d’images et transcription |
 | `OPENAI_ADMIN_KEY` | Coûts et résolution des noms de clés |
 | `OPENAI_ADMIN_API_KEY` | Alias compatible de la clé d’administration |
 

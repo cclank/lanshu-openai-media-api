@@ -1,4 +1,4 @@
 interface:
   display_name: "lanshu-OpenAI Media API"
-  short_description: "Generate images, transcribe audio, and inspect API usage"
-  default_prompt: "Use $lanshu-openai-media-api to generate an image or transcribe an audio file through the OpenAI API, preserving request IDs and usage."
+  short_description: "Generate text and images, transcribe audio, inspect usage"
+  default_prompt: "Use $lanshu-openai-media-api to generate text or images or transcribe audio through the OpenAI API, preserving request IDs and usage."

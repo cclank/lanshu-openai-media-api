@@ -2,6 +2,16 @@
 
 Documentation checked: **2026-10-29**. Prices below are dated references, not a replacement for returned usage or billing records.
 
+## Text generation
+
+- Endpoint: `POST https://api.openai.com/v1/responses` with `model`, `input`, optional `instructions`, `reasoning.effort`, `max_output_tokens`, and `store: false`.
+- Curated text models: `gpt-6.1-sol` (balanced default), `gpt-6-astra` (highest intelligence), `gpt-6.1-terra` (efficient writing), and `gpt-6-luna` (fast, high-volume work). These are catalog choices, not a guarantee of access for every API project.
+- Defaults: `gpt-6.1-sol`, medium reasoning, 4096 maximum output tokens. Explicit models are preserved. `none` reasoning is unsupported by Astra and Sol; use low or higher. Terra and Luna support none.
+- In raw REST responses, text is in assistant message `output[].content[]` items of type `output_text`. The first output item may contain reasoning; the SDK convenience property `output_text` must not be assumed to exist in raw JSON.
+- The output limit includes visible output and reasoning. `status: incomplete` may have no visible text and still incur usage. Preserve returned status, `incomplete_details`, full response, usage, response ID, and request ID.
+- Incomplete, refused, or empty responses save artifacts but return `ok: false` and exit 1. Do not automatically retry a paid request. A loaded credential is redacted from text artifacts as well as JSON/stdout.
+- `store: false` disables storing this Response for later retrieval; it does not establish zero data retention. The CLI is single-turn and does not execute tools or stream.
+
 ## Images
 
 - Endpoint: `POST https://api.openai.com/v1/images/generations`.
@@ -31,6 +41,11 @@ Documentation checked: **2026-10-29**. Prices below are dated references, not a 
 - Empty or incomplete records do not establish a zero charge. Daily totals cannot establish a per-request amount when several requests or concurrent callers are involved. Never repeat a generation to recover a past bill.
 
 ## Official sources
+
+- [Current text-model guide](https://developers.openai.com/api/docs/guides/latest-model)
+- [Text generation and output parsing](https://developers.openai.com/api/docs/guides/text)
+- [Reasoning and incomplete responses](https://developers.openai.com/api/docs/guides/reasoning)
+- [Responses API](https://developers.openai.com/api/reference/resources/responses/methods/create)
 
 - [Sunburst](https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst)
 - [Flare](https://developers.openai.com/api/docs/models/gpt-image-2.5-flare)

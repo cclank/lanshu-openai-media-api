@@ -1,6 +1,6 @@
 # Lanshu OpenAI Media API
 
-**エージェント向けの OpenAI 画像生成・音声文字起こしツール。使用量を記録できます。**
+**エージェント向けの OpenAI テキスト・画像生成と音声文字起こし。使用量を記録できます。**
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Runtime](https://img.shields.io/badge/runtime-standard_library-475569?style=flat-square)](../../README.md#requirements)
@@ -10,10 +10,11 @@
 
 [English](../../README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [العربية](README.ar.md) · [Türkçe](README.tr.md)
 
-OpenAI の画像生成、ファイル文字起こし、費用照会 API を呼び出す小さな Python CLI と、単体で配布できるスキルです。成功した呼び出しの出力ファイル、リクエスト ID、使用量を一緒に保存します。英語版 README を主文書としています。
+OpenAI のテキスト・画像生成、ファイル文字起こし、費用照会 API を呼び出す小さな Python CLI と、単体で配布できるスキルです。成功した呼び出しの出力ファイル、リクエスト ID、使用量を一緒に保存します。英語版 README を主文書としています。
 
 ## 機能
 
+- Responses API でテキストを生成。厳選した4モデル、推論強度、出力トークン上限に対応します。
 - Sunburst と Flare による画像生成。サイズ、品質、枚数、形式を指定できます。
 - GPT-Transcribe による音声・動画ファイルの文字起こし。複数言語のヒントと専門用語に対応します。
 - 管理者キーを使い、プロジェクト、API キー、モデルで費用記録を絞り込めます。
@@ -23,6 +24,10 @@ OpenAI の画像生成、ファイル文字起こし、費用照会 API を呼�
 
 | 用途 | モデル | 選択 |
 | --- | --- | --- |
+| 日常のテキスト生成とコーディング | `gpt-6.1-sol` | テキストの既定、能力と費用のバランス |
+| 高度な推論と専門業務 | `gpt-6-astra` | 最高の知能 |
+| 執筆と推敲 | `gpt-6.1-terra` | 高速で効率的 |
+| 定型タスクの大量処理 | `gpt-6-luna` | 速度と費用を優先 |
 | 画質を重視した画像生成 | `gpt-image-2.5-sunburst` | 画像の既定値 |
 | 速度を重視した画像生成 | `gpt-image-2.5-flare` | 素早い下書き |
 | 音声・動画の文字起こし | `gpt-transcribe` | ASR の既定値 |
@@ -36,6 +41,22 @@ Python 3.9 以上。実行時の Python 依存は標準ライブラリのみで�
 ## クイックスタート
 
 プロジェクトディレクトリで実行します。課金が発生する呼び出しの前に、既存のローカル環境へ通常の API キーを設定してください。
+
+### テキストを生成する
+
+```bash
+python3 scripts/openai_media.py text \
+  --model gpt-6.1-sol \
+  --prompt "API 自動化の利点を短い文で三つ説明してください。" \
+  --reasoning-effort low \
+  --out output/answer.txt
+```
+
+既定値は `gpt-6.1-sol`、推論強度 `medium`、出力上限4096トークンです。難しい仕事には `gpt-6-astra`、効率的な執筆には `gpt-6.1-terra`、高速な定型処理には `gpt-6-luna` を選べます。`python3 scripts/openai_media.py models --task text` でテキストモデルだけを表示します。[公式モデルガイド](https://developers.openai.com/api/docs/guides/latest-model).
+
+`--prompt-file` は UTF-8 入力、`--instructions` は上位の指示、`--max-output-tokens` は推論トークンも含む出力上限です。Astra と Sol は `low` 以上、Terra と Luna は `none` にも対応します。リクエストは `store: false` を使います。`--dry-run` は認証情報の読み込み、API 呼び出し、ファイル作成を行いません。
+
+`.txt` と隣接する `.metadata.json` に、応答 ID、返されたモデル、状態、request ID、usage を保存します。未完了・拒否・空の応答でも結果と使用量を保存し、`ok: false` と終了コード1を返します。再実行を判断する前に `response_status`、`incomplete_details`、`refusals` を確認してください。POST は自動再試行しません。
 
 ### 画像を生成する
 
@@ -87,7 +108,7 @@ lanshu-openai-media-api models
 
 | 変数 | 用途 |
 | --- | --- |
-| `OPENAI_API_KEY` | 画像生成と文字起こし |
+| `OPENAI_API_KEY` | テキスト・画像生成と文字起こし |
 | `OPENAI_ADMIN_KEY` | 費用照会とキー名の解決 |
 | `OPENAI_ADMIN_API_KEY` | 管理者キーの互換エイリアス |
 

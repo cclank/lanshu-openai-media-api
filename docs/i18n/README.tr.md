@@ -1,6 +1,6 @@
 # Lanshu OpenAI Media API
 
-**Ajanlar için OpenAI ile görsel üretimi ve ses dökümü; kullanım kayıtlarıyla birlikte.**
+**Ajanlar için OpenAI ile metin ve görsel üretimi ve ses dökümü; kullanım kayıtlarıyla birlikte.**
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Runtime](https://img.shields.io/badge/runtime-standard_library-475569?style=flat-square)](../../README.md#requirements)
@@ -10,10 +10,11 @@
 
 [English](../../README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [العربية](README.ar.md) · [Türkçe](README.tr.md)
 
-OpenAI görsel üretimi, dosya dökümü ve maliyet API’lerini çağıran küçük bir Python CLI ve bağımsız dağıtılabilen bir beceridir. Başarılı çağrılarda çıktı dosyaları, istek kimliği ve kullanım verileri birlikte saklanır. İngilizce README ana belgedir.
+OpenAI metin ve görsel üretimi, dosya dökümü ve maliyet API’lerini çağıran küçük bir Python CLI ve bağımsız dağıtılabilen bir beceridir. Başarılı çağrılarda çıktı dosyaları, istek kimliği ve kullanım verileri birlikte saklanır. İngilizce README ana belgedir.
 
 ## Özellikler
 
+- Responses API ile metin üretin; dört seçilmiş model, akıl yürütme düzeyi ve çıktı token sınırı kullanın.
 - Sunburst veya Flare ile boyut, kalite, adet ve biçim seçerek görsel üretin.
 - GPT-Transcribe ile ses ve video dosyalarını yazıya dökün; birden fazla dil ipucu ve alan terimi sağlayın.
 - Yönetici anahtarıyla proje, API anahtarı ve modele göre maliyet kayıtlarını okuyun.
@@ -23,6 +24,10 @@ OpenAI görsel üretimi, dosya dökümü ve maliyet API’lerini çağıran kü�
 
 | Görev | Model | Seçim |
 | --- | --- | --- |
+| Günlük metin ve kodlama | `gpt-6.1-sol` | Varsayılan metin modeli, dengeli |
+| Zorlu akıl yürütme ve uzmanlık işleri | `gpt-6-astra` | En yüksek zekâ |
+| Yazma ve düzenleme | `gpt-6.1-terra` | Hızlı ve verimli |
+| Odaklı, yüksek hacimli işler | `gpt-6-luna` | Hız ve maliyet öncelikli |
 | Görsel kalitesi öncelikli | `gpt-image-2.5-sunburst` | Varsayılan görsel modeli |
 | Üretim hızı öncelikli | `gpt-image-2.5-flare` | Hızlı taslaklar |
 | Ses ve video dosyalarını yazıya dökme | `gpt-transcribe` | Varsayılan ASR modeli |
@@ -36,6 +41,22 @@ Python 3.9 veya üzeri gerekir; çalışma zamanında yalnızca standart kütüp
 ## Hızlı başlangıç
 
 Komutları proje dizininden çalıştırın. Ücretli bir çağrıdan önce normal API anahtarını mevcut yerel ortamınızda yapılandırın.
+
+### Metin üretme
+
+```bash
+python3 scripts/openai_media.py text \
+  --model gpt-6.1-sol \
+  --prompt "API otomasyonunun faydalarını üç kısa cümleyle açıkla." \
+  --reasoning-effort low \
+  --out output/answer.txt
+```
+
+Varsayılanlar: `gpt-6.1-sol`, `medium` akıl yürütme ve 4096 çıktı token sınırı. Zorlu işler için `gpt-6-astra`, verimli yazım için `gpt-6.1-terra`, hızlı odaklı işler için `gpt-6-luna` seçin. `python3 scripts/openai_media.py models --task text` yalnızca metin modellerini listeler. [Resmî model rehberi](https://developers.openai.com/api/docs/guides/latest-model).
+
+`--prompt-file` UTF-8 girdisini okur; `--instructions` genel talimatları belirler; `--max-output-tokens` akıl yürütme tokenlarını da içeren çıktı sınırıdır. Astra ve Sol `low` veya üstünü, Terra ve Luna ayrıca `none` düzeyini destekler. İstekler `store: false` kullanır. `--dry-run` anahtar okumaz, API çağırmaz ve dosya oluşturmaz.
+
+`.txt` ve yanındaki `.metadata.json`, metni, yanıt kimliğini, dönen modeli, durumu, request ID ve kullanım verilerini saklar. Eksik, reddedilen veya boş yanıtlar dosyaları ve kullanımı korur; `ok: false` ve çıkış kodu 1 döndürür. Yeni çağrıdan önce `response_status`, `incomplete_details` ve `refusals` alanlarını inceleyin; POST otomatik yinelenmez.
 
 ### Görsel üretme
 
@@ -87,7 +108,7 @@ lanshu-openai-media-api models
 
 | Değişken | Kullanım |
 | --- | --- |
-| `OPENAI_API_KEY` | Görsel üretimi ve ses dökümü |
+| `OPENAI_API_KEY` | Metin ve görsel üretimi ve ses dökümü |
 | `OPENAI_ADMIN_KEY` | Maliyet sorgusu ve anahtar adı çözümleme |
 | `OPENAI_ADMIN_API_KEY` | Yönetici anahtarının uyumlu alternatif adı |
 

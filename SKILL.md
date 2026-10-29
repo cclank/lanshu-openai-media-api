@@ -1,6 +1,6 @@
 ---
 name: lanshu-openai-media-api
-description: Generate images and transcribe audio files through the OpenAI API for agent automation. Use for direct API calls with GPT Image 2.5 Sunburst, Flare, or GPT-Transcribe, and for retaining usage or querying related costs. Not for image requests without an API requirement or for live microphone sessions.
+description: Generate text and images and transcribe audio through the OpenAI API for agent automation. Use for explicit API requests with curated models, structured usage records, and related cost queries. Not for ordinary writing or image tasks without an API requirement, or live microphone sessions.
 ---
 
 # Lanshu OpenAI Media API
@@ -13,20 +13,39 @@ Replace `<skill-dir>` with this file's absolute parent directory. API execution 
 
 | Task | Model | Selection |
 | --- | --- | --- |
+| Everyday text and coding | `gpt-6.1-sol` | Text default; balanced capability and cost |
+| Demanding reasoning and professional work | `gpt-6-astra` | Highest intelligence |
+| Writing and revision | `gpt-6.1-terra` | Fast and efficient |
+| Focused, high-volume tasks | `gpt-6-luna` | Fastest and most cost-effective |
 | Image generation with a focus on quality | `gpt-image-2.5-sunburst` | Image default |
 | Fast everyday image generation | `gpt-image-2.5-flare` | Fast drafts |
 | Audio/video file transcription | `gpt-transcribe` | ASR default |
 
-`python3 <skill-dir>/scripts/openai_media.py models` returns this catalog. Model references were checked on 2026-10-29. Preserve an explicitly requested model. If it is retired, check official documentation and report the result rather than silently switching models.
+`python3 <skill-dir>/scripts/openai_media.py models` returns this catalog; add `--task text` to list only text models. Model references were checked on 2026-10-29. Preserve an explicitly requested model. If it is retired, check official documentation and report the result rather than silently switching models.
 
 ## Credentials
 
-- Image generation and transcription use `OPENAI_API_KEY`.
+- Text generation, image generation, and transcription use `OPENAI_API_KEY`.
 - Cost queries use `OPENAI_ADMIN_KEY`, with `OPENAI_ADMIN_API_KEY` as an alias.
 - Read the process environment first. If the export is absent, the helper can load `~/.zshrc` through a new `zsh -ic` process. Startup output is discarded; the value travels through a private memory pipe.
 - `--env-file /absolute/path/existing.env` explicitly selects an existing literal-value credential file and overrides the corresponding environment variable. File contents are parsed as data, without executing them. `--no-shell-env` disables the zsh fallback.
 - Keep credentials in the user's existing local environment. Never write keys into the skill, project files, logs, command arguments, or chat. The admin credential is used only for cost queries.
 - A user's authorization to use an existing key continues throughout the current task. If that decision is unresolved, follow the host agent's credential authorization rules.
+
+## Generate text
+
+```bash
+python3 <skill-dir>/scripts/openai_media.py text \
+  --prompt "Summarize the benefits of automated transcription in three sentences." \
+  --reasoning-effort low \
+  --out /absolute/path/answer.txt
+```
+
+Defaults: `gpt-6.1-sol`, `medium` reasoning, and 4096 maximum output tokens. Choose Astra for demanding work, Terra for efficient writing, or Luna for fast focused tasks. Preserve an explicit model. Options include `--prompt-file` for UTF-8 input, `--instructions` for high-level guidance, `--reasoning-effort`, `--max-output-tokens`, and `--dry-run`.
+
+Use `POST /v1/responses` with `store: false`. The output limit includes reasoning tokens. Sol and Astra reject `--reasoning-effort none` before a paid call; use `low` or higher. Collect all assistant `output_text` parts rather than assuming the first output item is text. The helper saves text and a sidecar with the response ID, returned model, status, usage, and HTTP request ID.
+
+Incomplete responses, refusals, and empty text preserve their artifacts and usage, return `ok: false`, and exit with code 1. Inspect `response_status`, `incomplete_details`, `refusals`, and the saved metadata before deciding on a new authorized call; the helper does not retry automatically. No streaming, tools, or conversation-state continuation is implemented by this command.
 
 ## Generate an image
 
@@ -59,7 +78,7 @@ Use files supplied by the user or already authorized for the task. Split oversiz
 
 ## Usage, costs, and failures
 
-Successful image or transcription calls write `<output-stem>.metadata.json` with request parameters, HTTP status, request ID, returned usage, elapsed time, outputs, and response metadata. Credentials and image base64 are excluded.
+Text, image, and transcription calls write `<output-stem>.metadata.json` with request parameters, HTTP status, request ID, returned usage, elapsed time, outputs, and response metadata. Credentials and image base64 are excluded.
 
 Usage is distinct from monetary cost. For actual cost records:
 
