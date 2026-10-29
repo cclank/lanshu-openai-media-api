@@ -1,0 +1,49 @@
+# Local credentials and environment
+.env
+.env.*
+*.env
+*.env.*
+.envrc
+.envrc.*
+*.key
+*.pem
+*.p12
+*.pfx
+*.keystore
+.secrets/
+.credentials/
+credentials.json
+credentials.*.json
+secrets.json
+secrets.*.json
+
+# Python environments, caches and build outputs
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.whl
+*.zip
+*.tar.gz
+
+# Local media, request metadata, billing exports and logs
+output/
+outputs/
+artifacts/
+recordings/
+billing/
+logs/
+*.metadata.json
+*.log
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/

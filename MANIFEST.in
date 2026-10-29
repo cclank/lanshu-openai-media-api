@@ -1,0 +1,6 @@
+include LICENSE SKILL.md
+recursive-include agents *.yaml
+recursive-include references *.md
+recursive-include docs *.md
+recursive-include tools *.py
+include scripts/test_openai_media.py
